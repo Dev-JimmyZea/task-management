@@ -13,7 +13,7 @@ Sigue estos pasos para clonar, instalar y ejecutar la aplicación en tu entorno 
 
 ### 1️⃣ Clonar el repositorio
 
-git clone https://github.com/tuusuario/tareas-colaborativas.git
+git clone https://github.com/Dev-JimmyZea/task-management.git
 
 cd tareas-colaborativas
 
