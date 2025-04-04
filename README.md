@@ -15,10 +15,12 @@ Sigue estos pasos para clonar, instalar y ejecutar la aplicación en tu entorno 
 
 git clone https://github.com/Dev-JimmyZea/task-management.git
 
-cd tareas-colaborativas
+cd task-management
 
 ### 2️⃣ Instalar dependencias
 Este proyecto utiliza Vite + React, así que asegúrate de tener Node.js (v18 o superior) instalado en tu sistema.
+
+Luego de clonar el repositorio, instala las dependencias ejecutando:
 
 npm install
 
