@@ -152,8 +152,10 @@ const Tasks = () => {
             await deleteDoc(doc(db, "tasks", taskId));
             toast.success("Tarea eliminada correctamente");
 
-            const newDismissed = {...dismissedVersions};
-            Object.keys(newDismissed).forEach(key => {
+            setTasks((prevTasks) => prevTasks.filter((task) => task.id !== taskId));
+
+            const newDismissed = { ...dismissedVersions };
+            Object.keys(newDismissed).forEach((key) => {
                 if (key.startsWith(`${taskId}_`)) {
                     delete newDismissed[key];
                 }
