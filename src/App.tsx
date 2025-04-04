@@ -1,9 +1,16 @@
-function App() {
+import { Outlet, Link } from "react-router-dom";
+
+export default function App() {
     return (
-        <div className="flex items-center justify-center h-screen">
-            <h1 className="text-3xl font-bold">Task Management App</h1>
+        <div className="min-h-screen flex flex-col">
+            <nav className="bg-gray-800 text-white p-4 flex gap-4">
+                <Link to="/">Home</Link>
+                <Link to="/tasks">Tasks</Link>
+                <Link to="/login">Login</Link>
+            </nav>
+            <main className="flex-1 p-4">
+                <Outlet />
+            </main>
         </div>
     );
 }
-
-export default App;
