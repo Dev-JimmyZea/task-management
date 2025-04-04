@@ -4,6 +4,9 @@ Aplicación web que permite a múltiples usuarios crear, editar, eliminar y cola
 
 ---
 
+## Despliegue
+Puedes ver la aplicación en vivo en https://task-manager-fd03e.web.app/
+
 ## 📥 Cómo Descargar y Ejecutar el Proyecto
 
 Sigue estos pasos para clonar, instalar y ejecutar la aplicación en tu entorno local:
