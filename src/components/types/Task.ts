@@ -5,4 +5,7 @@ export interface Task {
     completed: boolean;
     userId: string;
     sharedWith: string[];
+    createdAt?: any;
+    updatedAt?: any;
+    lastEditedBy?: string;
 }

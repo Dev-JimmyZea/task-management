@@ -5,15 +5,15 @@ import {
     query,
     onSnapshot,
     where,
-    orderBy,
     deleteDoc,
     doc,
-    getDocs
+    getDocs,
 } from "firebase/firestore";
 import TaskModal from "../components/Tasks/TaskModal";
 import { useAuth } from "../context/AuthContext";
 import { toast } from "react-toastify";
 import { Task } from "../components/types/Task.ts";
+import {updateViewedTask} from "../helpers/viewedTasks.tsx";
 
 const Tasks = () => {
     const { user } = useAuth();
@@ -23,50 +23,103 @@ const Tasks = () => {
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [currentTask, setCurrentTask] = useState<Task | null>(null);
 
+    const [dismissedVersions, setDismissedVersions] = useState<Record<string, boolean>>({});
+
+    const DISMISSED_KEY = `dismissedTaskVersions_${user?.uid || "guest"}`;
+
     useEffect(() => {
         if (!user) return;
 
-        const ownTasksQuery = query(
-            collection(db, "tasks"),
-            where("userId", "==", user.uid),
-            orderBy("createdAt", "desc")
-        );
+        try {
+            const saved = localStorage.getItem(DISMISSED_KEY);
+            if (saved) {
+                setDismissedVersions(JSON.parse(saved));
+            }
+        } catch (e) {
+            console.error("Error loading dismissed task versions:", e);
+        }
+    }, [user, DISMISSED_KEY]);
 
-        const sharedTasksQuery = query(
-            collection(db, "tasks"),
-            where("sharedWith", "array-contains", user.uid),
-            orderBy("createdAt", "desc")
-        );
+    useEffect(() => {
+        if (Object.keys(dismissedVersions).length > 0) {
+            localStorage.setItem(DISMISSED_KEY, JSON.stringify(dismissedVersions));
+        }
+    }, [dismissedVersions, DISMISSED_KEY]);
 
-        const unsubscribeOwn = onSnapshot(ownTasksQuery, (querySnapshot) => {
-            const own = querySnapshot.docs.map((doc) => ({
+    const dismissTaskVersion = (taskId: string, timestamp: number) => {
+        const versionKey = `${taskId}_${timestamp}`;
+        setDismissedVersions(prev => ({
+            ...prev,
+            [versionKey]: true
+        }));
+    };
+
+    useEffect(() => {
+        if (!user) return;
+
+        const tasksRef = collection(db, "tasks");
+        const ownQuery = query(tasksRef, where("userId", "==", user.uid));
+        const sharedQuery = query(tasksRef, where("sharedWith", "array-contains", user.uid));
+
+        const unsubOwn = onSnapshot(ownQuery, (ownSnap) => {
+            handleSnapshotUpdate(ownSnap);
+        });
+
+        const unsubShared = onSnapshot(sharedQuery, (sharedSnap) => {
+            handleSnapshotUpdate(sharedSnap);
+        });
+
+        const handleSnapshotUpdate = async (querySnapshot: any) => {
+            const fetchedTasks = querySnapshot.docs.map((doc: any) => ({
                 id: doc.id,
                 ...doc.data(),
             })) as Task[];
 
-            setTasks((prev) => {
-                const shared = prev.filter((t) => t.userId !== user.uid);
-                return [...own, ...shared];
-            });
-        });
+            for (const task of fetchedTasks) {
+                const updatedAt = (task as any).updatedAt?.toMillis?.() || Date.now();
+                const versionKey = `${task.id}_${updatedAt}`;
 
-        const unsubscribeShared = onSnapshot(sharedTasksQuery, (querySnapshot) => {
-            const shared = querySnapshot.docs.map((doc) => ({
-                id: doc.id,
-                ...doc.data(),
-            })) as Task[];
+                if (dismissedVersions[versionKey]) continue;
 
-            setTasks((prev) => {
-                const own = prev.filter((t) => t.userId === user.uid);
-                return [...own, ...shared];
+                if ((task as any).lastEditedBy === user.uid) continue;
+
+                const notificationId = `${task.id}_${updatedAt}`;
+
+                if (!toast.isActive(notificationId)) {
+                    toast.info(
+                        `Tarea actualizada: ${task.title}`,
+                        {
+                            toastId: notificationId,
+                            autoClose: false,
+                            closeOnClick: false,
+                            draggable: false,
+                            closeButton: true,
+                            onClose: () => {
+                                dismissTaskVersion(task.id, updatedAt);
+                            },
+                        }
+                    );
+                }
+            }
+
+            setTasks((prevTasks) => {
+                const all = [
+                    ...prevTasks.filter((p) => !fetchedTasks.find((f) => f.id === p.id)),
+                    ...fetchedTasks,
+                ];
+                return all.sort((a, b) => {
+                    const aTime = (a as any).createdAt?.toMillis?.() || 0;
+                    const bTime = (b as any).createdAt?.toMillis?.() || 0;
+                    return bTime - aTime;
+                });
             });
-        });
+        };
 
         return () => {
-            unsubscribeOwn();
-            unsubscribeShared();
+            unsubOwn();
+            unsubShared();
         };
-    }, [user]);
+    }, [user, dismissedVersions]);
 
     useEffect(() => {
         const fetchUsers = async () => {
@@ -84,15 +137,26 @@ const Tasks = () => {
         fetchUsers();
     }, []);
 
-    const handleEdit = (task: Task) => {
+    const handleEdit = async (task: Task) => {
         setCurrentTask(task);
         setIsModalOpen(true);
+
+        const updatedAt = (task as any).updatedAt?.toMillis?.() || 0;
+        await updateViewedTask(user!.uid, task.id, updatedAt);
     };
 
     const handleDelete = async (taskId: string) => {
         try {
             await deleteDoc(doc(db, "tasks", taskId));
             toast.success("Tarea eliminada correctamente");
+
+            const newDismissed = {...dismissedVersions};
+            Object.keys(newDismissed).forEach(key => {
+                if (key.startsWith(`${taskId}_`)) {
+                    delete newDismissed[key];
+                }
+            });
+            setDismissedVersions(newDismissed);
         } catch (error) {
             console.error("Error eliminando tarea:", error);
             toast.error("Hubo un error al eliminar la tarea");

@@ -76,6 +76,8 @@ const TaskForm = ({ task, onClose }: { task?: Task | null; onClose: () => void }
                     title,
                     description,
                     sharedWith,
+                    updatedAt: serverTimestamp(),
+                    lastEditedBy: user.uid,
                 });
                 toast.success("Tarea actualizada exitosamente");
             } else {
@@ -86,6 +88,8 @@ const TaskForm = ({ task, onClose }: { task?: Task | null; onClose: () => void }
                     userId: user.uid,
                     sharedWith,
                     createdAt: serverTimestamp(),
+                    updatedAt: serverTimestamp(),
+                    lastEditedBy: user.uid,
                 });
                 toast.success("Tarea creada exitosamente");
             }
