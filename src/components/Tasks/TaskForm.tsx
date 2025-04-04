@@ -13,6 +13,7 @@ import { db } from "../../lib/firebase";
 import { useAuth } from "../../context/AuthContext";
 import { toast } from "react-toastify";
 import { Task } from "../types/Task";
+import { logTaskChange} from "../../helpers/logTaskChanges.tsx";
 
 const TaskForm = ({ task, onClose }: { task?: Task | null; onClose: () => void }) => {
     const { user } = useAuth();
@@ -79,9 +80,10 @@ const TaskForm = ({ task, onClose }: { task?: Task | null; onClose: () => void }
                     updatedAt: serverTimestamp(),
                     lastEditedBy: user.uid,
                 });
+                await logTaskChange(task.id, user.uid, "updated");
                 toast.success("Tarea actualizada exitosamente");
             } else {
-                await addDoc(collection(db, "tasks"), {
+                const newTaskRef = await addDoc(collection(db, "tasks"), {
                     title,
                     description,
                     completed: false,
@@ -91,6 +93,11 @@ const TaskForm = ({ task, onClose }: { task?: Task | null; onClose: () => void }
                     updatedAt: serverTimestamp(),
                     lastEditedBy: user.uid,
                 });
+
+                const taskId = newTaskRef.id;
+
+                await logTaskChange(taskId, user.uid, "created");
+
                 toast.success("Tarea creada exitosamente");
             }
 

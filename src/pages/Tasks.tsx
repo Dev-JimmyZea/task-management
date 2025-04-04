@@ -14,6 +14,7 @@ import { useAuth } from "../context/AuthContext";
 import { toast } from "react-toastify";
 import { Task } from "../components/types/Task.ts";
 import {updateViewedTask} from "../helpers/viewedTasks.tsx";
+import TaskHistoryModal from "../components/Tasks/TaskHistoryModal.tsx";
 
 const Tasks = () => {
     const { user } = useAuth();
@@ -22,6 +23,7 @@ const Tasks = () => {
     const [userMap, setUserMap] = useState<Record<string, string>>({});
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [currentTask, setCurrentTask] = useState<Task | null>(null);
+    const [historyTaskId, setHistoryTaskId] = useState<string | null>(null);
 
     const [dismissedVersions, setDismissedVersions] = useState<Record<string, boolean>>({});
 
@@ -218,6 +220,7 @@ const Tasks = () => {
                                 </p>
                             )}
                         </div>
+
                         <div className="flex gap-2">
                             <button
                                 onClick={() => handleEdit(task)}
@@ -231,10 +234,22 @@ const Tasks = () => {
                             >
                                 Eliminar
                             </button>
+                            <button
+                                onClick={() => setHistoryTaskId(task.id)}
+                                className="bg-blue-500 text-white px-3 py-1 rounded"
+                            >
+                                Historial
+                            </button>
                         </div>
                     </li>
                 ))}
             </ul>
+            {historyTaskId && (
+                <TaskHistoryModal
+                    taskId={historyTaskId}
+                    onClose={() => setHistoryTaskId(null)}
+                />
+            )}
         </div>
     );
 };
