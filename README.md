@@ -13,20 +13,20 @@ Sigue estos pasos para clonar, instalar y ejecutar la aplicación en tu entorno 
 
 ### 1️⃣ Clonar el repositorio
 
-git clone https://github.com/Dev-JimmyZea/task-management.git
+`git clone https://github.com/Dev-JimmyZea/task-management.git`
 
-cd task-management
+`cd task-management`
 
 ### 2️⃣ Instalar dependencias
 Este proyecto utiliza Vite + React, así que asegúrate de tener Node.js (v18 o superior) instalado en tu sistema.
 
 Luego de clonar el repositorio, instala las dependencias ejecutando:
 
-npm install
+`npm install`
 
 ### 3️⃣ Ejecutar la aplicación
 
-npm run dev
+`npm run dev`
 
 Esto abrirá la aplicación en http://localhost:5173
 
